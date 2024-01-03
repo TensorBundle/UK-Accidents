@@ -1,0 +1,49 @@
+body {
+	background-color: rgba(20,20,20,1);
+	font-family: Lato, sans-serif;
+/*	height: 100%;*/
+}
+
+.header h1 {
+	color: rgba(255,255,255,0.8);
+	margin: 14px 0px 0px 0px;
+	font-size: 20px;
+	font-weight: 400;
+	letter-spacing: 1px;
+	padding-left: 22px;
+}
+
+#fatalCountContainer {
+	position: absolute;
+	z-index: 1;
+	left: 22px;
+	top: 56px;
+	display: none;
+}
+
+#fatalCounter {
+	color: #de2a0bbf;
+	font-size: 60px;
+	font-weight: 700;
+}
+
+#fatalCounterDesc {
+	font-size: 14px;
+	font-weight: 700;
+	position: relative;
+	top: 6px;
+	letter-spacing: 1px;
+  color: #de2a0bbf;
+  text-align: left;
+}
+
+#svgContainer {
+    display: grid;
+    height: 100%;
+}
+
+svg {
+    max-width: 100%;
+    max-height: 100vh;
+    margin: auto;
+}
