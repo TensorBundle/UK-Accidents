@@ -1,4 +1,4 @@
-﻿AccidentID,Date,Time,Local Authority ONS District,Latitude,Longitude,Sum of Accident Vehicle Count,Sum of Accident Casualty Count,Accident Severity,Deceased Count,Light Conditions,Speed Limit,Road Type,Road Surface Conditions,Junction Detail
+﻿AccidentID,Date,Time,Local Authority ONS District,Latitude,Longitude,Sum of Accident Vehicle Count,CasualtyCount,Accident Severity,Deceased Count,Light Conditions,Speed Limit,Road Type,Road Surface Conditions,Junction Detail
 8808606,2022-09-16 00:00:00,19:49,Highland,57.292296,'-3.914451,2,15,Fatal,1,Darkness - no lighting,60,Single carriageway,Dry,Not at junction or within 20 metres
 8799556,2022-12-02 00:00:00,12:43,Cotswold,51.781909,'-1.785473,4,11,Fatal,2,Daylight,60,Single carriageway,Wet or damp,Not at junction or within 20 metres
 8737491,2022-12-02 00:00:00,17:15,Cheshire East,53.143793,'-2.338505,4,8,Fatal,1,Darkness - no lighting,70,Dual carriageway,Dry,Not at junction or within 20 metres
