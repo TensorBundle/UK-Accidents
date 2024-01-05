@@ -111,7 +111,7 @@ li:hover {
 }
 
 li .filterToggle {
-	background: url(img/filterOff.png) no-repeat;
+	background: url(/UK-Accidents/img/filterOff.png) no-repeat;
 	display: inline-block;
 	width: 6px;
 	height: 6px;
@@ -119,7 +119,7 @@ li .filterToggle {
 }
 
 li.checked .filterToggle {
-	background: url(img/filterOn.png) no-repeat;
+	background: url(/UK-Accidents/img/filterOn.png) no-repeat;
 }
 
 #svgContainer {
