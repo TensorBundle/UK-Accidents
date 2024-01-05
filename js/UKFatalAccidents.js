@@ -1,6 +1,3 @@
-// !preview r2d3 data=c(0.3, 0.6, 0.8, 0.95, 0.40, 0.20), viewer = "browser"
-//
-// r2d3: https://rstudio.github.io/r2d3
 import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
 
 var width = 800;
@@ -15,11 +12,17 @@ var projection = d3.geoAlbers()
 
 const batchCount = 7;
 
+const filters = {};
+
+filters.RoadType = ["Single carriageway","Dual carriageway","Roundabout","Slip road","One way street","Other"]
+filters.SpeedLimit = ["20","30","40","50","60","70"]
+filters.RoadSurface = ["Dry","Wet or damp","Frost or ice","Flood","Snow","Other"]
+
 var svg = d3.select("#svgContainer").append("svg").attr("width",width).attr("height",height)
 
 Promise.all([
-    d3.csv("https://raw.githubusercontent.com/TensorBundle/skills-introduction-to-github/main/dataFord3.csv"),
-    d3.json("https://raw.githubusercontent.com/TensorBundle/skills-introduction-to-github/main/LAD_May_2022_V2.json"),
+    d3.csv("https://raw.githubusercontent.com/TensorBundle/UK-Accidents/main/data/UKAccidentData.csv"),
+    d3.json("https://raw.githubusercontent.com/TensorBundle/UK-Accidents/main/data/LAD_May_2022_V3.json"),
 ]).then(function(data) {
     var AccidentData = data[0]
     var TopoJSON = data[1]
@@ -31,47 +34,46 @@ Promise.all([
         var p = projection([AccidentData[i].Longitude2,AccidentData[i].Latitude])
         AccidentData[i].x = p[0]; AccidentData[i].y = p[1];
         (i < 5) ? AccidentData[i].batch = i : AccidentData[i].batch = 5+((i - (i % batchCount)) / batchCount)
+        if(!d3.subset([AccidentData[i]["Road Type"]],filters.RoadType)) {AccidentData[i]["Road Type"] = "Other"}
+        if(!d3.subset([AccidentData[i]["Road Surface Conditions"]],filters.RoadSurface)) {
+          AccidentData[i]["Road Surface Conditions"] == "Flood over 3cm. deep" ? AccidentData[i]["Road Surface Conditions"] = "Flood" : AccidentData[i]["Road Surface Conditions"] = "Other"
+        }
       })
 
-    console.log(AccidentData)
-    console.log(TopoJSON)
+    //console.log(AccidentData)
+    //console.log(TopoJSON)
     render(AccidentData, TopoJSON)
         }).catch(function(err) {
                     console.log(err)
                                 });
-
-/*
-console.log(data)
-var AccidentData = d3.csv("https://raw.githubusercontent.com/TensorBundle/skills-introduction-to-github/main/dataFord3.csv").then(function(d) {console.log(d)})
-var UKmap = d3.json("https://raw.githubusercontent.com/TensorBundle/skills-introduction-to-github/main/LAD_May_2022.json").then(function(d) {render(data, d)})
-*/
-
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 function drawMap(MapData) {
-  var colorScale = d3.scaleThreshold()
-  .domain([100000, 1000000, 10000000, 30000000, 100000000, 500000000])
-  .range(d3.schemeBlues[7]);
-
-//  console.log(topojson.feature(MapData,MapData.objects.LAD_UK_TOPOJSON))
+  //console.log(topojson.feature(MapData,MapData.objects.LAD_UK_TOPOJSON).features)
     
-  svg.select("#mapContainer").append("path")
-    .datum(topojson.feature(MapData,MapData.objects.LAD_UK_TOPOJSON))
+  svg.select("#mapContainer").selectAll("path")
+    //.datum(topojson.feature(MapData,MapData.objects.LAD_UK_TOPOJSON))
+    .data(topojson.feature(MapData,MapData.objects.LAD_UK_TOPOJSON).features)
+    .enter().append("path")
     .attr("d", d3.geoPath().projection(projection))
     .attr("fill", "#141414")
-    //.attr("style","stroke: black; stroke-width: 1px; stroke-opacity: 30%")
+    //.attr("style","stroke: #141414; stroke-width: 1px; stroke-opacity: 0.3")
+    .on("mouseover",function(e) {d3.select("#hoverContainer").text(d3.select(this).datum().properties.LAD22NM)})
+    .on("mouseout", function(e) {})
 }
 
-function fadeInMap() {
-    svg.select("#mapContainer").select("path")
+function fadeIn() {
+    svg.select("#mapContainer").selectAll("path")
     .transition()
     .duration(2000)
     .style("stroke","#9e9e9e8a")
     .style("stroke-width","1px")
     .style("stroke-opacity","30%")
+
+    d3.select("#filterContainer").transition().duration(2000).style("opacity",1)
 }
 
 function drawLocations(AccidentData) {
@@ -89,7 +91,6 @@ function drawLocations(AccidentData) {
 
 function drawExplosion(rows, expArray, durations) {
   var theta = 2 * Math.PI / expArray.length;
-  //var x = row.x, y = row.y;
   var r = 10
   var r2 = 10
   var batchid = rows[0].batch
@@ -138,6 +139,7 @@ function drawCircle(rows,duration) {
     .style("fill","rgba(176, 33, 18, 0.5)")
     .style("stroke","red")
     .style("stroke-width","0.5")
+    .attr("r",0)
     
   if(duration>0)
   {
@@ -156,74 +158,58 @@ function drawAccident(rows, expArray, durations) {
   drawExplosion(rows, expArray, durations)
 }  
 
-function drawTitle(duration) {
-  d3.select("body").insert("div",":first-child").attr("id","headerContainer").attr("class","header").attr("style","display: block;").append("h1").text("U.K. Fatal Accidents in 2022")
-  
-  d3.select("body")
-    .insert("div").attr("id","fatalCountContainer").attr("style","display: block;")
-    .insert("span").attr("id","fatalCounter").text("0")
-    .insert("br")
-    .insert("span").attr("id","fatalCounterDesc").text("Died in accident")
-  //var hCont = svg.append("g").attr("id","headerContainer")
-  
-  //hCont.append("text")
-}
-
 function render(AccidentData,TopoJSON) {
 var expArray = [0,1,2,3,4,5,6,7,8,9,10]
 
 svg.append("g").attr("id","mapContainer")
 svg.append("g").attr("id","pointContainer")
 
+
+// Temporary drawmap
+/*
 drawMap(TopoJSON)
-//drawTitle()
-//drawLocations(AccidentData)
+svg.select("#mapContainer").selectAll("path")
+.style("stroke","#9e9e9e8a")
+.style("stroke-width","1px")
+.style("stroke-opacity","0.3")
+*/
+
+drawMap(TopoJSON)
 
 var k = 0;
 var totalCount = 0;
-var e
+var currentMode = "bubbles";
 var durations = {}
 durations.expDuration = 600
 durations.circleDelay = 200
 durations.circleDuration = 1000
+var colorScale = d3.scaleThreshold().domain([0, 1, 2, 3, 4, 5]).range(d3.schemeYlOrRd[7]);
 
 function intervalCallback(elapsed) {
   if(elapsed > timeoutDelay)
   {
-    console.log("elapsed: "+elapsed+" k: "+k)
+    //console.log("elapsed: "+elapsed+" k: "+k)
     var rows
-    /*
-    if(k<3) {
-      rows = [AccidentData[k]]
-    }
-    else
-    {
-      rows = AccidentData.filter(function(d) {return d.batch == k})
-    }
-    */
+
     rows = AccidentData.filter(function(d) {return d.batch == k})
-    console.log(rows.length)
+    //console.log(rows.length)
   
     if (k == 5) {
         durations.expDuration = 300
         durations.circleDelay = 0
-        durations.circleDuration = 0
+        durations.circleDuration = 1000
         timeoutDelay = 30
     }
-    if(rows.length == 0) { // End of drawing
+    if(rows.length == 0) { // End of inital rendering
         timer.stop();
         console.log("Timeout stop called")
-        fadeInMap()
+        fadeIn()
     }
-    if (rows.length > 0) {
+    if (rows.length > 0) { // If not done yet, restart the timer and draw the next batch
       timer.restart(intervalCallback);
-      //console.log("Timeout restarted with delay: "+timeoutDelay)
       drawCircle(rows,durations.circleDuration)
       totalCount = totalCount + rows.length
-      //console.log(d3.select("fatalCounter"))
       d3.select("#fatalCounter").text(totalCount)
-      //drawAccident(rows, expArray, durations)
-      //console.log(k)
     }
     k++;
   }
@@ -231,7 +217,159 @@ function intervalCallback(elapsed) {
 
 var timeoutDelay = 1500
 var timer = d3.timer(intervalCallback,timeoutDelay)
-//const t = d3.interval(intervalCallback, 1500);
+//drawCircle(AccidentData,durations.circleDuration)
+
+d3.select("#displayBubbles").on("click", showBubbles)
+d3.select("#displayHeatmap").on("click", showHeatmap)
+
+function showBubbles() {
+  currentMode = "bubbles"
+
+  d3.select("#mapContainer").selectAll("path").transition().duration(1000)
+  .attr("fill", "#141414")
+  .style("stroke-opacity","0.3")  // TBD: Chain on transition end
+
+  d3.select("#pointContainer").selectAll("circle")
+  .data(filteredData, function(d) {return d.AccidentID})
+  .join(
+    function(enter) {var circles = enter.append("circle")
+                      .attr("transform", function(d) {
+                          return "translate(" + [d.x,d.y] + ")";
+                        })
+                      .style("fill","rgba(176, 33, 18, 0.5)")
+                      .style("stroke","red")
+                      .style("stroke-width","0.5")
+                      .attr("r",0)
+                      .transition()
+                      .duration(600)
+                      .attr("r",(d) => {return d.CasualtyCount})
+                    }
+    ,update => update
+    ,exit => exit)
+}
+
+function showHeatmap() {
+  currentMode = "heatmap"
+  var circles = d3.select("#pointContainer").selectAll("circle")
+
+  circles.transition().duration(1000).attr("r",0)
+  .end().then(function() {
+    circles.remove()
+
+    d3.select("#mapContainer").selectAll("path").transition().duration(1000)
+    .attr("fill", function (d) {
+      var LADMeasures = d3.rollup(filteredData, (D) => D.length, (d) => d["Local Authority ONS District"])
+      d.total = LADMeasures.get(d.properties.LAD22NM) || 0;
+      return colorScale(d.total);
+    })
+    .style("stroke-opacity","0.9")
+  } 
+  );
+}
+
+var activeFilters = {};
+activeFilters.RoadType = [];
+activeFilters.SpeedLimit = [];
+activeFilters.RoadSurface = [];
+var filteredData = AccidentData;
+function filterOnClick(clickedValue, filter) {
+  //console.log(clickedValue)
+  if(d3.subset([clickedValue], activeFilters[filter])) // if the clicked value exists in the applied filters, remove it, otherwise add it
+  {activeFilters[filter] = d3.difference(activeFilters[filter], [clickedValue])}
+  else
+  {activeFilters[filter] = d3.union(activeFilters[filter], [clickedValue])} 
+  console.log(activeFilters)
+  updateFilters()
+}
+
+
+function updateFilters() {
+  
+  if(activeFilters.RoadType.size > 0) {
+    filteredData = AccidentData.filter(function(d) {return d3.subset([d["Road Type"]],activeFilters.RoadType) })
+    } else {filteredData = AccidentData}
+  if(activeFilters.SpeedLimit.size > 0) {
+    filteredData = filteredData.filter(function(d) {return d3.subset([d["Speed Limit"]],activeFilters.SpeedLimit) })
+    } else {}
+  if(activeFilters.RoadSurface.size > 0) {
+    filteredData = filteredData.filter(function(d) {return d3.subset([d["Road Surface Conditions"]],activeFilters.RoadSurface) })
+    } else {}
+  
+  console.log(filteredData)
+  updateChart(currentMode)
+}
+
+function updateChart(currentMode) {
+  if(currentMode == "bubbles")
+  {
+    d3.select("#pointContainer").selectAll("circle")
+        .data(filteredData, function(d) {return d.AccidentID})
+        .join(
+          function(enter) {console.log(enter);
+                                var circles = enter.append("circle")
+                                    .attr("transform", function(d) {
+                                        return "translate(" + [d.x,d.y] + ")";
+                                      })
+                                    .style("fill","rgba(176, 33, 18, 0.5)")
+                                    .style("stroke","red")
+                                    .style("stroke-width","0.5")
+                                    .attr("r",0)
+                                    .transition()
+                                    .duration(600)
+                                    .attr("r",(d) => {return d.CasualtyCount})
+                          }
+          ,update => update
+          ,function(exit) {exit.transition().duration(1000).attr("r",0).end().then(function() {exit.remove()}) })
+  }
+  if(currentMode == "heatmap")
+  {
+    d3.select("#mapContainer").selectAll("path").transition().duration(1000)
+    .attr("fill", function (d) {
+      var LADMeasures = d3.rollup(filteredData, (D) => D.length, (d) => d["Local Authority ONS District"])
+      d.total = LADMeasures.get(d.properties.LAD22NM) || 0;
+      return colorScale(d.total);
+    })
+  }
+}
+//Set up filters
+d3.select("#RoadTypeFilterGroup").selectAll("li").data(filters.RoadType)
+    .join(
+      function(enter) {
+              var li = enter.append("li")
+              li.append("span").attr("class","filterToggle").datum(function(d,i) {return {item: d,index: i}})
+              li.append("span").attr("class","filterItem").datum(function(d,i) {return {item: d,index: i}}).text(function(d) {return d.item})
+              li.on("click", function() {
+                d3.select(this).classed("checked", !d3.select(this).classed("checked"))  // Toggle checkbox
+                var clickedValue = d3.select(this).datum()  // Get clicked value
+                filterOnClick(clickedValue, "RoadType")}) 
+            }
+    )
+
+d3.select("#SpeedLimitFilterGroup").selectAll("li").data(filters.SpeedLimit)
+.join(
+  function(enter) {
+          var li = enter.append("li")
+          li.append("span").attr("class","filterToggle").datum(function(d,i) {return {item: d,index: i}})
+          li.append("span").attr("class","filterItem").datum(function(d,i) {return {item: d,index: i}}).text(function(d) {return d.item})
+          li.on("click", function() {
+            d3.select(this).classed("checked", !d3.select(this).classed("checked"))  // Toggle checkbox
+            var clickedValue = d3.select(this).datum()  // Get clicked value
+            filterOnClick(clickedValue, "SpeedLimit")}) 
+        }
+)
+
+d3.select("#RoadSurfaceFilterGroup").selectAll("li").data(filters.RoadSurface)
+.join(
+  function(enter) {
+          var li = enter.append("li")
+          li.append("span").attr("class","filterToggle").datum(function(d,i) {return {item: d,index: i}})
+          li.append("span").attr("class","filterItem").datum(function(d,i) {return {item: d,index: i}}).text(function(d) {return d.item})
+          li.on("click", function() {
+            d3.select(this).classed("checked", !d3.select(this).classed("checked"))  // Toggle checkbox
+            var clickedValue = d3.select(this).datum()  // Get clicked value
+            filterOnClick(clickedValue, "RoadSurface")}) 
+        }
+)
 
 
 }
