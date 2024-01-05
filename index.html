@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <head>
-<!-- Google tag (gtag.js) -->
+  <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-K6KCHYCYSC"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -9,16 +9,41 @@
 
   gtag('config', 'G-K6KCHYCYSC');
 </script>
-<link rel="stylesheet" href="/UK-Accidents/css/UKFatalAccidents.css">
-<script src="/UK-Accidents/js/topojson.js"></script>
-<script type="module" src="/UK-Accidents/js/UKFatalAccidents.js"></script>
+<link rel="stylesheet" href="/css/UKFatalAccidents.css">
+<script src="/js/topojson.js"></script>
+<script type="module" src="/js/UKFatalAccidents.js"></script>
 </head>
 <body>
   <div id="headerContainer" class="header" style="display: block;"><h1>U.K. Fatal Accidents in 2022</h1></div>
-  <div id="fatalCountContainer" style="display: block;">
-    <span id="fatalCounter">0</span>
-    <br>
-    <span id="fatalCounterDesc">DIED IN ACCIDENT</span>
+  <div id="leftPanelContainer">
+    <div id="fatalCountContainer" style="display: block;">
+      <span id="fatalCounter">0</span>
+      <br>
+      <span id="fatalCounterDesc">DIED IN ACCIDENT</span>
+    </div>
+    <div id="hoverContainer" style="display: none;">"</div>
+  </div>
+  <div id="filterContainer" style="opacity: 0;">
+    <div class="displaySelector">
+      <div class="displaySelectorTitle">SHOW AS</div>
+      <div class="displaySelectorItems">
+        <div id="displayBubbles" class="displaySelectorItem"><div><img src="/css/img/bubble.png" width="10px" height="10px" style="display:block;"></div><div>Bubbles</div></div>
+        <div id="displayHeatmap" class="displaySelectorItem"><div><img src="/css/img/heatmap.png" width="10px" height="10px" style="display:block;"></div><div>Heatmap</div></div>
+       </div>
+    </div>
+
+    <div class="filterHeader">
+      <div class="filterTitle">ROAD TYPE</div>
+        <u1 id="RoadTypeFilterGroup" class="filterGroup"></u1>
+    </div>
+    <div class="filterHeader">
+      <div class="filterTitle">SPEED LIMIT</div>
+        <u1 id="SpeedLimitFilterGroup" class="filterGroup"></u1>
+    </div>
+    <div class="filterHeader">
+      <div class="filterTitle">ROAD SURFACE</div>
+        <u1 id="RoadSurfaceFilterGroup" class="filterGroup"></u1>
+    </div>
   </div>
   <div id="svgContainer"></div>
 </body>
